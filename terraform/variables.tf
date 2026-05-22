@@ -26,6 +26,7 @@ variable "subnet_id" {
 variable "key_pair_name" {
   description = "EC2 key pair name for initial SSH access"
   type        = string
+  default = "todo"
 }
 
 variable "suspended" {
