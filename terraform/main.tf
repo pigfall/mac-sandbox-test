@@ -67,7 +67,6 @@ resource "aws_instance" "mac" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
   host_id                = aws_ec2_host.mac.id
-  subnet_id              = var.subnet_id
   key_name               = var.key_pair_name
   vpc_security_group_ids = [aws_security_group.mac.id]
 
