@@ -24,6 +24,7 @@ variable "vpc_id" {
 variable "subnet_id" {
   description = "Subnet in the target AZ"
   type        = string
+  default = "subnet-0220eebd8bd810c8c"
 }
 
 variable "key_pair_name" {
