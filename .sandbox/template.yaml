@@ -1,0 +1,73 @@
+overview: |
+  # iOS Development with macOS
+
+  This sandbox provisions an EC2 Mac instance for iOS builds.
+  Source code is edited in the Crafting workspace and built on the Mac via SSH.
+
+  - **Mac Instance**: click the `macos` resource for connection details
+  - **Build**: run `./scripts/build-ios.sh` in the workspace terminal
+
+workspaces:
+  - name: dev
+    checkouts:
+      - path: my-ios-app
+        repo:
+          git: https://github.com/bigtoy2645/todoList-iOS.git
+        manifest:
+          overlays:
+            - inline:
+                hooks:
+                  build:
+                    cmd: |
+                      set -e
+                      REMOTE=$(jq -r ".public_ip.value" /run/sandbox/fs/resources/macos/state)
+                      rsync -az --exclude '.git' -e "ssh -o StrictHostKeyChecking=no" \
+                        my-ios-app/ "ec2-user@$REMOTE:~/my-ios-app/"
+                      ssh "ec2-user@$REMOTE" "cd ~/my-ios-app && xcodebuild -scheme MyApp -sdk iphoneos build"
+                daemons:
+                  ssh-tunnel:
+                    run:
+                      cmd: |
+                        REMOTE=$(jq -r ".public_ip.value" /run/sandbox/fs/resources/macos/state)
+                        ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 \
+                          -N "ec2-user@$REMOTE"
+    wait_for:
+      - macos
+    env:
+      - AWS_CONFIG_FILE=/run/sandbox/fs/secrets/shared/aws-config
+
+  - name: provisioner
+    base_snapshot: oci://us-docker.pkg.dev/crafting-dev/sandbox/shared/workspace:latest
+    checkouts:
+      - path: infra
+        repo:
+          git: https://github.com/pigfall/mac-sandbox-test
+    env:
+      - AWS_CONFIG_FILE=/run/sandbox/fs/secrets/shared/aws-config
+
+resources:
+  - name: macos
+    brief: "macOS: {{state.public_ip.value}}"
+    details: |
+      **EC2 Mac Instance**
+
+      - Public IP: {{state.public_ip.value}}
+      - Instance ID: {{state.instance_id.value}}
+      - Host ID: {{state.host_id.value}}
+
+      Connect from the workspace terminal:
+      ```
+      ssh ec2-user@{{state.public_ip.value}}
+      ```
+
+      Resource state: `/run/sandbox/fs/resources/macos/state`
+    terraform:
+      workspace: provisioner
+      dir: infra/terraform
+      save_state: true
+      run:
+        timeout: 30m0s
+      on_suspend:
+        vars:
+          suspended: "true"
+      on_delete: {}
