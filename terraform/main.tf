@@ -103,7 +103,8 @@ resource "null_resource" "wait_for_ssh" {
       type        = "ssh"
       user        = "ec2-user"
       host        = aws_instance.mac[0].public_ip
-      private_key = file("~/.ssh/id_rsa")
+      #private_key = file("~/.ssh/id_rsa")
+      agent = true
       timeout     = "10m"
     }
 

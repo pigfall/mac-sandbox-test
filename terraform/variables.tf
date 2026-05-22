@@ -12,7 +12,7 @@ variable "ami_id" {
 variable "availability_zone" {
   description = "AZ that supports Mac instances"
   type        = string
-  default = "us-west-1"
+  default = "us-west-1a"
 }
 
 variable "vpc_id" {
